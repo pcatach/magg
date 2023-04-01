@@ -1,0 +1,2 @@
+# magg
+ Metaculus Aggregator
