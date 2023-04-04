@@ -3,11 +3,13 @@ def format_question(question):
         f'<h1><a href="{question.page_url}">{question.title}</a></h2>\n'
         f"<p><b>Author</b>: {question.author_name}</p>\n"
         f"<p><b>Published at</b>: {question.publish_time}</p>\n"
-        f'<p><b>Description</b>: <a href="{question.page_url}">{question.description[:400]}...</a></p>\n'
+        f'<p><b>Description</b>: <a href="{question.page_url}">'
+        f"{question.description[:400] if question.description is not None else 'See description in the Metaculus website'}...</a></p>\n"
         f"<p><b>Closes at</b>: {question.close_time}</p>\n"
         f"<p><b>Resolves at</b>: {question.resolve_time}</p>\n"
         f"<p><b>Number of predictions</b>: {question.number_of_predictions}</p>\n"
-        f"<p><b>Current prediction</b>: {question.metacalculus_prediction}</p>\n"
+        f"<p><b>Community Prediction{' ('+question.community_prediction_measure+')' if question.community_prediction_measure else ''}</b>: "
+        f"{question.community_prediction if question.community_prediction is not None else 'N/A'}</p>\n"
     )
 
     return formatted_question
