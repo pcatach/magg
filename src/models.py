@@ -23,12 +23,14 @@ class Question:
     resolve_time: datetime.datetime
     active_state: str
     number_of_predictions: int
-    metacalculus_prediction: float
+    community_prediction: str | None = None
+    community_prediction_measure: str | None = None
     category: str | None = None
     description: str | None = None
 
     @classmethod
     def from_api_response(cls, question_dict, category=None):
+        community_prediction, measure = cls.get_community_prediction(question_dict)
         return cls(
             id=question_dict["id"],
             page_url=f"{BASE_URL}{question_dict['page_url']}",
@@ -40,7 +42,28 @@ class Question:
             resolve_time=sanitize_datetime(question_dict["resolve_time"]),
             active_state=question_dict["active_state"],
             number_of_predictions=question_dict["number_of_predictions"],
-            metacalculus_prediction=question_dict["metaculus_prediction"]["full"],
+            community_prediction=community_prediction,
+            community_prediction_measure=measure,
             category=category,
             description=question_dict.get("description"),
         )
+
+    @classmethod
+    def get_community_prediction(cls, question_dict):
+        if (
+            question_dict.get("prediction_timeseries") is None
+            or question_dict["prediction_timeseries"] == []
+        ):
+            return None, None
+
+        latest_prediction = question_dict["prediction_timeseries"][-1][
+            "community_prediction"
+        ]
+        if type(latest_prediction) == float:
+            return latest_prediction, None
+        if "avg" in latest_prediction:
+            return latest_prediction["avg"], "avg"
+        elif "q2" in latest_prediction:
+            return latest_prediction["q2"], "median"
+        else:
+            return None, None
