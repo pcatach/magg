@@ -1,17 +1,21 @@
 import datetime
+import logging
 
 from api import get_questions_list
 from formatting import format_email
 
-category = "computing--ai"
+logging.basicConfig(level=logging.DEBUG)
+
+categories = ["computing--ai", "bio"]
 
 questions = get_questions_list(
-    category=category,
+    categories=categories,
     limit=10,
-    min_published_time=datetime.datetime.now() - datetime.timedelta(days=7),
+    min_published_time=datetime.datetime.now() - datetime.timedelta(days=15),
+    include_descriptions=True,
 )
 
-email = format_email([category], questions)
+email = format_email(categories, questions)
 
 with open("example.html", "w+") as example_file:
     example_file.write(email)
