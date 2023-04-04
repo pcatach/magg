@@ -1,9 +1,14 @@
 from dataclasses import dataclass
 import datetime
 
-BASE_URL = "https://metacalculus.com"
-DATETIME_FORMAT_1 = "%Y-%m-%dT%H: %M: %S.%fZ"
-DATETIME_FORMAT_2 = "%Y-%m-%dT%H: %M: %SZ"
+BASE_URL = "https://metaculus.com"
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
+
+def sanitize_datetime(datetime_string: str) -> datetime.datetime:
+    return datetime.datetime.strptime(
+        datetime_string.split(".")[0].rstrip("Z"), DATETIME_FORMAT
+    )
 
 
 @dataclass
@@ -12,7 +17,6 @@ class Question:
     page_url: str
     author_name: str
     title: str
-    description: str
     created_time: datetime.datetime
     publish_time: datetime.datetime
     close_time: datetime.datetime
@@ -21,29 +25,22 @@ class Question:
     number_of_predictions: int
     metacalculus_prediction: float
     category: str | None = None
+    description: str | None = None
 
     @classmethod
     def from_api_response(cls, question_dict, category=None):
         return cls(
             id=question_dict["id"],
-            page_url=f"{BASE_URL}/{question_dict['page_url']}",
+            page_url=f"{BASE_URL}{question_dict['page_url']}",
             author_name=question_dict["author_name"],
             title=question_dict["title"],
-            description=question_dict["description"],
-            created_time=datetime.datetime.strptime(
-                question_dict["created_time"], DATETIME_FORMAT_1
-            ),
-            publish_time=datetime.datetime.strptime(
-                question_dict["publish_time"], DATETIME_FORMAT_2
-            ),
-            close_time=datetime.datetime.strptime(
-                question_dict["close_time"], DATETIME_FORMAT_2
-            ),
-            resolve_time=datetime.datetime.strptime(
-                question_dict["resolve_time"], DATETIME_FORMAT_1
-            ),
+            created_time=sanitize_datetime(question_dict["created_time"]),
+            publish_time=sanitize_datetime(question_dict["publish_time"]),
+            close_time=sanitize_datetime(question_dict["close_time"]),
+            resolve_time=sanitize_datetime(question_dict["resolve_time"]),
             active_state=question_dict["active_state"],
             number_of_predictions=question_dict["number_of_predictions"],
             metacalculus_prediction=question_dict["metaculus_prediction"]["full"],
             category=category,
+            description=question_dict.get("description"),
         )
