@@ -8,7 +8,7 @@ def format_question(question):
         f"<p><b>Closes at</b>: {question.close_time}</p>\n"
         f"<p><b>Resolves at</b>: {question.resolve_time}</p>\n"
         f"<p><b>Number of predictions</b>: {question.number_of_predictions}</p>\n"
-        f"<p><b>Community Prediction{' ('+question.community_prediction_measure+')' if question.community_prediction_measure else ''}</b>: "
+        f"<p><b>Community Prediction{' ('+question.community_prediction_statistic+')' if question.community_prediction_statistic else ''}</b>: "
         f"{question.community_prediction if question.community_prediction is not None else 'N/A'}</p>\n"
     )
 
