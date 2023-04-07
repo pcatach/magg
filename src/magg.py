@@ -6,13 +6,14 @@ from formatting import format_email
 
 logging.basicConfig(level=logging.DEBUG)
 
-categories = ["computing--ai", "bio"]
+categories = ["computing--ai"]
 
 questions = get_questions_list(
     categories=categories,
     limit=10,
     min_published_time=datetime.datetime.now() - datetime.timedelta(days=15),
-    include_descriptions=True,
+    include_descriptions=False,
+    use_response_example=True,
 )
 
 email = format_email(categories, questions)

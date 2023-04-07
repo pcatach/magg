@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 
 import requests
@@ -31,10 +32,9 @@ def get_questions_list(
     min_published_time: datetime.datetime | None = None,
     limit: int = None,
     include_descriptions: bool = False,
+    use_response_example: bool = False,
 ):
-    next_url = (
-        f"{BASE_URL}/api2/questions/?include_description=true&order_by=created_time"
-    )
+    next_url = f"{BASE_URL}/api2/questions/?order_by=created_time&type=forecast"
     for category in categories:
         next_url += f"&categories={category}"
     if min_published_time is not None:
@@ -43,10 +43,16 @@ def get_questions_list(
     questions = []
 
     while next_url:
-        LOG.debug(f"Fetching questions from {next_url}")
-        response = requests.get(next_url)
-        data = response.json()
-        next_url = data["next"]
+        if use_response_example:
+            LOG.debug(f"Using response example")
+            with open("response_example.json", "r") as response_example_file:
+                data = json.load(response_example_file)
+            next_url = False
+        else:
+            LOG.debug(f"Fetching questions from {next_url}")
+            response = requests.get(next_url)
+            data = response.json()
+            next_url = data["next"]
 
         if include_descriptions:
             for question in data["results"]:
