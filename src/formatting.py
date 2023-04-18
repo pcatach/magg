@@ -1,32 +1,46 @@
-def format_question(question):
-    formatted_question = (
-        f'<h1><a href="{question.page_url}">{question.title}</a></h2>\n'
-        f"<p><b>Author</b>: {question.author_name}</p>\n"
-        f"<p><b>Published at</b>: {question.publish_time}</p>\n"
-        f'<p><b>Description</b>: <a href="{question.page_url}">'
-        f"{question.description[:400] if question.description is not None else 'See description in the Metaculus website'}...</a></p>\n"
-        f"<p><b>Closes at</b>: {question.close_time}</p>\n"
-        f"<p><b>Resolves at</b>: {question.resolve_time}</p>\n"
-        f"<p><b>Number of predictions</b>: {question.number_of_predictions}</p>\n"
-        f"<p><b>Community Prediction{' ('+question.community_prediction_statistic+')' if question.community_prediction_statistic else ''}</b>: "
-        f"{question.community_prediction if question.community_prediction is not None else 'N/A'}</p>\n"
-    )
+def generate_question_digest(questions, categories):
+    # Create the HTML header
+    html = "<html><head><title>Question Digest</title></head><style>"
 
-    return formatted_question
+    # Add the CSS
+    html += "body {font-family: Arial, sans-serif; padding: 20px;}"
+    html += "h2 {font-size: 24px; margin-top: 40px;}"
+    html += "a {color: #0077cc; text-decoration: none;}"
+    html += "a:hover {text-decoration: underline;}"
+    html += "p {font-size: 16px; line-height: 24px; margin-bottom: 16px;}"
+    html += "hr {border: none; border-top: 1px solid #ddd; margin: 20px 0;}"
+    html += "</style></head><body>"
 
-
-def format_email(categories, questions):
-    formatted_email = (
+    # Add the intro text
+    html += (
         "<p>Hello, <p>\n"
         + "<p>This is your weekly digest of new metaculus questions on categories:\n<b>"
         + "</b>, <b>".join(categories)
         + "</b>.<p>"
-        + "<p>Here are this week's questions:</p>"
     )
 
+    html += "<p>Here are the latest questions:</p>"
+
+    # Loop through the questions and add them to the HTML
     for question in questions:
-        formatted_email += format_question(question)
+        html += f'<h2><a href="{question.page_url}">{question.title}</a></h2>'
+        html += f"<p><strong>Category:</strong> {question.category}</p>"
+        html += f"<p><strong>Published Date:</strong> {question.publish_time}</p>"
+        html += f"<p><strong>Closing Date:</strong> {question.close_time}</p>"
+        html += f"<p><strong>Resolving Date:</strong> {question.resolve_time}</p>"
+        html += f"<p><strong>Number of Predictions:</strong> {question.number_of_predictions}</p>"
+        html += f"<p><strong>Community Prediction{' ('+question.community_prediction_statistic+')' if question.community_prediction_statistic else ''}</strong>: "
+        if question.community_prediction is not None:
+            if type(question.community_prediction) == float:
+                html += f"{float(question.community_prediction):.2f}"
+            else:
+                html += f"{question.community_prediction}"
+        else:
+            html += f"N/A"
+        html += "</p>\n<hr>"
 
-    formatted_email += "<p>Hope you have a great week,</p>" "<p><b>magg.</b></p>"
+    # Add the HTML footer
+    html += "<p>Hope you have a great week,</p>" "<p><b>magg.</b></p>"
+    html += "</body></html>"
 
-    return formatted_email
+    return html

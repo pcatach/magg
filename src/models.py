@@ -1,8 +1,13 @@
 from dataclasses import dataclass
 import datetime
+import math
+import sqlite3
 
-BASE_URL = "https://metaculus.com"
+BASE_URL = "https://www.metaculus.com"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
+LIMIT_PER_CATEGORY = (
+    60  # should be a multiple of 20, which is the default pagination limit
+)
 
 
 def sanitize_datetime(datetime_string: str) -> datetime.datetime:
@@ -23,15 +28,15 @@ class Question:
     resolve_time: datetime.datetime
     active_state: str
     number_of_predictions: int
+    activity: float
     community_prediction: str | None = None
     community_prediction_statistic: str | None = None
     category: str | None = None
-    description: str | None = None
 
     @classmethod
     def from_api_response(cls, question_dict, category=None):
         community_prediction, statistic = cls.get_community_prediction(question_dict)
-        return cls(
+        question = cls(
             id=question_dict["id"],
             page_url=f"{BASE_URL}{question_dict['page_url']}",
             author_name=question_dict["author_name"],
@@ -41,12 +46,86 @@ class Question:
             close_time=sanitize_datetime(question_dict["close_time"]),
             resolve_time=sanitize_datetime(question_dict["resolve_time"]),
             active_state=question_dict["active_state"],
+            activity=question_dict["activity"],
             number_of_predictions=question_dict["number_of_predictions"],
             community_prediction=community_prediction,
             community_prediction_statistic=statistic,
             category=category,
-            description=question_dict.get("description"),
         )
+        question.save_to_db()
+        return question
+
+    def save_to_db(self):
+        # Set up the database connection
+        with sqlite3.connect("forecasts.db") as connection:
+            c = connection.cursor()
+
+            # Create the forecasts table if it does not already exist
+            c.execute(
+                """CREATE TABLE IF NOT EXISTS forecasts (
+                    id INTEGER PRIMARY KEY,
+                    page_url TEXT,
+                    author_name TEXT,
+                    title TEXT,
+                    created_time TIMESTAMP,
+                    publish_time TIMESTAMP,
+                    close_time TIMESTAMP,
+                    resolve_time TIMESTAMP,
+                    active_state TEXT,
+                    number_of_predictions INTEGER,
+                    activity FLOAT,
+                    community_prediction FLOAT,
+                    community_prediction_statistic TEXT,
+                    category TEXT
+                )"""
+            )
+
+            c.execute(
+                """INSERT OR REPLACE INTO forecasts (
+                    id, 
+                    page_url, 
+                    author_name, 
+                    title, 
+                    created_time, 
+                    publish_time, 
+                    close_time, 
+                    resolve_time, 
+                    active_state, 
+                    number_of_predictions, 
+                    activity, 
+                    community_prediction, 
+                    community_prediction_statistic, 
+                    category) 
+                    VALUES 
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    self.id,
+                    self.page_url,
+                    self.author_name,
+                    self.title,
+                    self.created_time,
+                    self.publish_time,
+                    self.close_time,
+                    self.resolve_time,
+                    self.active_state,
+                    self.number_of_predictions,
+                    self.activity,
+                    self.community_prediction,
+                    self.community_prediction_statistic,
+                    self.category,
+                ),
+            )
+
+    @classmethod
+    def load_from_db(cls):
+        with sqlite3.connect("forecasts.db") as connection:
+            c = connection.cursor()
+
+            c.execute("SELECT * FROM forecasts")
+            results = c.fetchall()
+
+            return [cls(*result) for result in results]
 
     @classmethod
     def get_community_prediction(cls, question_dict):
@@ -87,6 +166,15 @@ class Question:
                     ),
                     statistic,
                 )
+            elif prediction_format == "num":
+                return (
+                    cls.format_num_prediction(
+                        float(probability),
+                        min=float(prediction_scale["min"]),
+                        max=float(prediction_scale["max"]),
+                    ),
+                    statistic,
+                )
 
         return probability, statistic
 
@@ -97,3 +185,13 @@ class Question:
         date_range = max - min
         date_prediction = min + date_range * probability
         return date_prediction.strftime("%Y-%m-%d")
+
+    @classmethod
+    def format_num_prediction(cls, probability, min, max):
+        if min > 0:
+            log_range = math.log10(max) - math.log10(min)
+            log_prob = math.log10(min) + log_range * probability
+        else:
+            log_range = math.log10(max)
+            log_prob = log_range * probability
+        return 10**log_prob
