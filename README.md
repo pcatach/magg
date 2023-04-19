@@ -7,21 +7,32 @@ Metaculus Aggregator
 This package is designed to help users aggregate predictions from Metaculus in a digest format. 
 It is currently in beta and has not been tested for robustness.
 
+## Installation
+
+Required: `python3.10`.
+
+```
+$ python3.10 -m venv env
+$ ./env/bin/pip install -r requirements.in
+```
+
 ## Usage
 
 ```python
-from api import get_questions_list
-categories = ["computing--ai", "bio"]
+from api import get_questions
+categories = ["computing", "bio"]
 
-questions = get_questions_list(
+questions = get_questions(
     categories=categories,
-    limit=10,
-    min_published_time=datetime.datetime.now() - datetime.timedelta(days=15),
-    include_descriptions=True,
+    min_published_time=datetime.datetime.now() - datetime.timedelta(days=60),
+    renew=renew,
 )
+
+html = generate_question_digest(questions, categories)
 ```
 
-## TODO
+or using the command line:
 
-- Restrict questions only to forecasts (exclude tournaments and challenges)
-- Convert community predictions to date or number
+```
+$ ./env/bin/python src/magg.py --renew --mail
+```

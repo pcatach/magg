@@ -54,9 +54,6 @@ def main(renew, mail):
             password=config["password"],
         )
 
-    with open("example.html", "w+") as example_file:
-        example_file.write(html)
-
 
 # use argparse to parse command line arguments
 parser = argparse.ArgumentParser(description="Magg's Metaculus Digest")
