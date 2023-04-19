@@ -9,11 +9,11 @@ It is currently in beta and has not been tested for robustness.
 
 ## Installation
 
-Required: `python3.10`.
+Required: `python3.9` and `docker` (for deployment).
 
 ```
-$ python3.10 -m venv env
-$ ./env/bin/pip install -r requirements.in
+$ python3.9 -m venv env
+$ ./env/bin/pip install -r requirements.txt
 ```
 
 ## Usage
@@ -35,4 +35,20 @@ or using the command line:
 
 ```
 $ ./env/bin/python src/magg.py --renew --mail
+```
+
+## Deployment
+
+Create the python package with
+
+```
+$ ./env/bin/python setup.py sdist --formats=gztar --dist-dir=deploy/
+```
+
+Then deploy to ec2 with
+
+```
+cd deploy
+terraform init
+terraform apply
 ```
