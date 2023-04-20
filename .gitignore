@@ -5,6 +5,7 @@ env/
 *.hcl
 *.tfstate
 *.tfstate.backup
+.terraform/
 
 forecasts.db
 

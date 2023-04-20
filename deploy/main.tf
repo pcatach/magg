@@ -5,11 +5,16 @@ terraform {
       version = "~> 4.0"
     }
   }
+  backend "s3" {
+    bucket = "magg-tfstate"
+    key    = "terraform.tfstate"
+    region = "us-west-1"
+  }
 }
 
 # Configure the AWS Provider
 provider "aws" {
-  region = "us-east-1"
+  region = "us-west-1"
 }
 
 resource "aws_key_pair" "aws_magg" {
@@ -18,7 +23,7 @@ resource "aws_key_pair" "aws_magg" {
 }
 
 resource "aws_instance" "magg_instance" {
-  ami           = "ami-0638741e0c9aabde6" # ubuntu 22.10
+  ami           = "ami-014d05e6b24240371" # us-west-1 ubuntu 22.04
   instance_type = "t2.micro"
   key_name      = "aws-magg"
 
@@ -39,4 +44,8 @@ resource "aws_instance" "magg_instance" {
       "pip3 install /opt/magg-1.0.tar.gz",
     ]
   }
+}
+
+output "aws_magg_ip" {
+  value = aws_instance.magg_instance.*.public_ip
 }
