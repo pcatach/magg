@@ -6,6 +6,9 @@ env/
 *.tfstate
 *.tfstate.backup
 .terraform/
+*.tar.gz
+*.whl
+*.egg-info
 
 forecasts.db
 

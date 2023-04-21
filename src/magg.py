@@ -45,6 +45,9 @@ def main(renew, mail):
 
     html = generate_question_digest(questions, categories)
 
+    with open("digest.html", "w") as f:
+        f.write(html)
+
     if mail:
         send_email(
             subject="Magg's Metaculus Digest",
