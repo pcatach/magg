@@ -42,7 +42,7 @@ $ ./env/bin/python src/magg.py --renew --mail
 Create the python package with
 
 ```
-$ ./env/bin/python setup.py sdist --formats=gztar --dist-dir=deploy/
+./env/bin/python -m build --outdir deploy/
 ```
 
 Then deploy to ec2 with
@@ -52,3 +52,7 @@ cd deploy
 terraform init
 terraform apply
 ```
+
+## TODO
+
+configure SES
