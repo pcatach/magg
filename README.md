@@ -9,7 +9,7 @@ It is currently in beta and has not been tested for robustness.
 
 ## Installation
 
-Required: `python3.9` and `docker` (for deployment).
+Required: `python3.9` and `terraform` (for deployment).
 
 ```
 $ python3.9 -m venv env
@@ -25,7 +25,7 @@ categories = ["computing", "bio"]
 questions = get_questions(
     categories=categories,
     min_published_time=datetime.datetime.now() - datetime.timedelta(days=60),
-    renew=renew,
+    renew=True,
 )
 
 html = generate_question_digest(questions, categories)
