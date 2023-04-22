@@ -54,7 +54,7 @@ def main(renew, mail):
             from_address=config["from_address"],
             to_address=config["to_address"],
             html_content=html,
-            password=config["password"],
+            aws_region=config["aws_region"],
         )
 
 

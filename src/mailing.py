@@ -1,22 +1,42 @@
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import boto3
+from botocore.exceptions import ClientError
 
 
 def send_email(
-    subject: str, from_address: str, to_address: str, html_content: str, password: str
+    subject: str,
+    from_address: str,
+    to_address: str,
+    html_content: str,
+    aws_region: str,
 ) -> None:
-    # Set up the email message
-    message = MIMEMultipart()
-    message["Subject"] = subject
-    message["From"] = from_address
-    message["To"] = to_address
+    sender = f"Sender Name <{from_address}>"
 
-    # Attach the HTML content to the email message
-    message.attach(MIMEText(html_content, "html"))
-
-    # Set up the SMTP server and send the email
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
-        server.starttls()
-        server.login(from_address, password)
-        server.sendmail(from_address, to_address, message.as_string())
+    client = boto3.client("ses", region_name=aws_region)
+    try:
+        # Provide the contents of the email.
+        response = client.send_email(
+            Destination={
+                "ToAddresses": [
+                    to_address,
+                ],
+            },
+            Message={
+                "Body": {
+                    "Html": {
+                        "Charset": "UTF-8",
+                        "Data": html_content,
+                    },
+                },
+                "Subject": {
+                    "Charset": "UTF-8",
+                    "Data": subject,
+                },
+            },
+            Source=sender,
+        )
+    # Display an error if something goes wrong.
+    except ClientError as e:
+        print(e.response["Error"]["Message"])
+    else:
+        print("Email sent! Message ID:"),
+        print(response["MessageId"])

@@ -53,6 +53,9 @@ terraform init
 terraform apply
 ```
 
-## TODO
+### Making email work
 
-configure SES
+To enable email (`--mail`), you need to configure SES. 
+You can do this by following the instructions [here](https://docs.aws.amazon.com/ses/latest/dg/send-an-email-using-sdk-programmatically.html).
+
+Fill in `config.json` with the appropriate values.

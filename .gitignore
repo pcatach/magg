@@ -11,4 +11,5 @@ env/
 *.egg-info
 
 forecasts.db
+config.json
 
