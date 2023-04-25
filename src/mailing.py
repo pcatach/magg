@@ -9,7 +9,7 @@ def send_email(
     html_content: str,
     aws_region: str,
 ) -> None:
-    sender = f"Sender Name <{from_address}>"
+    sender = f"magg digest <{from_address}>"
 
     client = boto3.client("ses", region_name=aws_region)
     try:

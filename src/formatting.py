@@ -40,7 +40,7 @@ def generate_question_digest(questions, categories):
         html += "</p>\n<hr>"
 
     # Add the HTML footer
-    html += "<p>Hope you have a great week,</p>" "<p><b>magg.</b></p>"
+    html += "<p>Hope you have a great day,</p>" "<p><b>magg.</b></p>"
     html += "</body></html>"
 
     return html
