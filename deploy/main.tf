@@ -54,7 +54,36 @@ resource "aws_instance" "magg_instance" {
   security_groups = [
     aws_security_group.magg_sg.name,
   ]
-  user_data = file("deploy.sh")
+  iam_instance_profile = aws_iam_instance_profile.magg_instance_profile.name
+}
+
+resource "aws_iam_instance_profile" "magg_instance_profile" {
+  name = "magg_instance_profile"
+  role = aws_iam_role.ses_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "ses_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+  role       = aws_iam_role.ses_role.name
+}
+
+resource "aws_iam_role" "ses_role" {
+  name = "ses_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
 
   connection {
     host        = self.public_ip
