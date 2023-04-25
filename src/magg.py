@@ -9,11 +9,11 @@ from mailing import send_email
 
 logging.basicConfig(level=logging.DEBUG)
 
-with open("config.json") as config_file:
-    config = json.load(config_file)
 
+def main(renew, mail, config_path):
+    with open(config_path) as config_file:
+        config = json.load(config_file)
 
-def main(renew, mail):
     categories = [
         "bio",
         "business",
@@ -72,5 +72,8 @@ parser.add_argument(
     help="send email",
     action="store_true",
 )
+parser.add_argument(
+    "-c", "--config", help="path to config file", default="/config.json"
+)
 args = parser.parse_args()
-main(args.renew, args.mail)
+main(args.renew, args.mail, args.config)
