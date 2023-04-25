@@ -12,7 +12,6 @@ terraform {
   }
 }
 
-# Configure the AWS Provider
 provider "aws" {
   region = "us-west-1"
 }
@@ -85,8 +84,9 @@ resource "aws_iam_role" "ses_role" {
 }
 
 
+resource "null_resource" "magg_data" {
   connection {
-    host        = self.public_ip
+    host        = aws_instance.magg_instance.public_ip
     type        = "ssh"
     user        = "ubuntu"
     private_key = file("~/.ssh/aws-magg.pem")
@@ -97,8 +97,24 @@ resource "aws_iam_role" "ses_role" {
     destination = "/tmp/magg-1.0.0.tar.gz"
   }
 
-  provisioner "local-exec" {
-    command = "echo The server IP address is ${self.public_ip}"
+  provisioner "file" {
+    source      = "config.json"
+    destination = "/tmp/config.json"
   }
 
+  provisioner "file" {
+    source      = "deploy.sh"
+    destination = "/tmp/deploy.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/deploy.sh",
+      "sudo /tmp/deploy.sh",
+    ]
+  }
+
+  provisioner "local-exec" {
+    command = "echo The server IP address is ${aws_instance.magg_instance.public_ip}"
+  }
 }
