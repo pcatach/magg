@@ -7,6 +7,8 @@ Metaculus Aggregator
 This package is designed to help users aggregate predictions from Metaculus in a digest format. 
 It is currently in beta and has not been tested for robustness.
 
+By default, it sends an email every Wednesday 3:30pm UTC with the top 30 questions in all categories (in terms of activity) published in the last 30 days.
+
 ## Installation
 
 Required: `python3.9` and `terraform` (for deployment).
@@ -24,6 +26,7 @@ categories = ["computing", "bio"]
 
 questions = get_questions(
     categories=categories,
+    limit=30,
     min_published_time=datetime.datetime.now() - datetime.timedelta(days=60),
     renew=True,
 )

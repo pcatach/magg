@@ -1,5 +1,27 @@
 {
     "from_address": "FILL_THIS_IN",
     "to_address": "FILL_THIS_IN",
-    "aws_region": "FILL_THIS_IN"
+    "aws_region": "FILL_THIS_IN",
+    "categories": [
+        "bio",
+        "business",
+        "category",
+        "comp-sci",
+        "computing",
+        "economy",
+        "environment",
+        "finance",
+        "geopolitics",
+        "human-sci",
+        "industry",
+        "infrastructure",
+        "law",
+        "math",
+        "patents",
+        "phys-sci",
+        "plantbased",
+        "social",
+        "tech",
+        "ukraine"      
+    ]
 }

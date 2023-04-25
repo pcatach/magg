@@ -14,36 +14,14 @@ def main(renew, mail, config_path):
     with open(config_path) as config_file:
         config = json.load(config_file)
 
-    categories = [
-        "bio",
-        "business",
-        # "category",
-        # "comp-sci",
-        # "computing",
-        # "economy",
-        # "environment",
-        # "finance",
-        # "geopolitics",
-        # "human-sci",
-        # "industry",
-        # "infrastructure",
-        # "law",
-        # "math",
-        # "patents",
-        # "phys-sci",
-        # "plantbased",
-        # "social",
-        # "tech",
-        # "ukraine",
-    ]
-
     questions = get_questions(
-        categories=categories,
-        min_published_time=datetime.datetime.now() - datetime.timedelta(days=60),
+        categories=config["categories"],
+        min_published_time=datetime.datetime.now() - datetime.timedelta(days=30),
+        limit=30,
         renew=renew,
     )
 
-    html = generate_question_digest(questions, categories)
+    html = generate_question_digest(questions, config["categories"])
 
     with open("digest.html", "w") as f:
         f.write(html)

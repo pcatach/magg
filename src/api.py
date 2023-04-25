@@ -29,8 +29,8 @@ def get_categories_list(limit: int = None):
 def get_questions(
     *,
     categories: list[str],
+    limit: int,
     min_published_time: datetime.datetime | None = None,
-    limit: int | None = LIMIT_PER_CATEGORY,
     renew: bool = False,
 ):
     if not renew:
@@ -60,7 +60,9 @@ def get_questions(
                 ]
             )
 
-            if len(questions) >= limit:
+            if len(questions) >= LIMIT_PER_CATEGORY:
                 break
+
+    questions = sorted(questions, key=lambda q: q.activity, reverse=True)[:limit]
 
     return questions
