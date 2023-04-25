@@ -5,4 +5,4 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "magg"
 version = "1.0.0"
-dependencies = ["requests"]
+dependencies = ["requests", "boto3"]
