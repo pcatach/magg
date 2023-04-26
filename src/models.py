@@ -57,7 +57,7 @@ class Question:
 
     def save_to_db(self):
         # Set up the database connection
-        with sqlite3.connect("forecasts.db") as connection:
+        with sqlite3.connect("/forecasts.db") as connection:
             c = connection.cursor()
 
             # Create the forecasts table if it does not already exist
@@ -119,7 +119,7 @@ class Question:
 
     @classmethod
     def load_from_db(cls):
-        with sqlite3.connect("forecasts.db") as connection:
+        with sqlite3.connect("/forecasts.db") as connection:
             c = connection.cursor()
 
             c.execute("SELECT * FROM forecasts")

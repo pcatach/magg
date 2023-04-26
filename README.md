@@ -51,6 +51,7 @@ Create the python package with
 Then deploy to ec2 with
 
 ```
+export TF_VAR_metaculus_api_key=<your metaculus api key>
 cd deploy
 terraform init
 terraform apply

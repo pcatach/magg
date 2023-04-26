@@ -12,6 +12,10 @@ terraform {
   }
 }
 
+variable "metaculus_api_key" {
+  type = string
+}
+
 provider "aws" {
   region = "us-west-1"
 }
@@ -54,6 +58,10 @@ resource "aws_instance" "magg_instance" {
     aws_security_group.magg_sg.name,
   ]
   iam_instance_profile = aws_iam_instance_profile.magg_instance_profile.name
+  user_data            = <<-EOF
+              #!/bin/bash
+              echo ${var.metaculus_api_key} > /metaculus_api_key
+              EOF
 }
 
 resource "aws_iam_instance_profile" "magg_instance_profile" {
