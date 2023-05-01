@@ -12,18 +12,6 @@ terraform {
   }
 }
 
-variable "metaculus_api_key" {
-  type = string
-}
-
-variable "mail_from" {
-  type = string
-}
-
-variable "mail_to" {
-  type = string
-}
-
 provider "aws" {
   region = "us-west-1"
 }
@@ -58,21 +46,6 @@ resource "aws_security_group" "magg_sg" {
   }
 }
 
-resource "aws_instance" "magg_instance" {
-  instance_type = "t2.micro"
-  key_name      = "aws-magg"
-  security_groups = [
-    aws_security_group.magg_sg.name,
-  ]
-  iam_instance_profile = aws_iam_instance_profile.magg_instance_profile.name
-  user_data            = <<-EOF
-              #!/bin/bash
-              echo ${var.metaculus_api_key} > ~/metaculus_api_key
-              export MAIL_FROM=${var.mail_from}
-              export MAIL_TO=${var.mail_to}
-              /opt/magg/env/bin/python /opt/magg/src/magg.py --renew --mail --mail-from=$MAIL_FROM --mail-to=$MAIL_TO >> /var/log/magg.log 2>&1
-              EOF
-}
 
 resource "aws_iam_instance_profile" "magg_instance_profile" {
   name = "magg_instance_profile"
@@ -99,6 +72,40 @@ resource "aws_iam_role" "ses_role" {
       }
     ]
   })
+}
+
+resource "aws_instance" "magg_instance" {
+  ami           = "FILL_THIS_IN"
+  instance_type = "t2.micro"
+  key_name      = "aws-magg"
+  security_groups = [
+    aws_security_group.magg_sg.name,
+  ]
+  iam_instance_profile = aws_iam_instance_profile.magg_instance_profile.name
+  user_data            = <<-EOF
+              #!/bin/bash
+              # run every Wednesday at 15:30
+              echo "30 15 * * 3 /opt/magg/env/bin/python /opt/magg/src/magg.py --renew --mail  --config=/var/magg/config.json >> /var/magg/magg.log 2>&1" | crontab -
+              EOF
+}
+
+resource "null_resource" "magg_data" {
+  connection {
+    host        = aws_instance.magg_instance.public_ip
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = file("~/.ssh/aws-magg.pem")
+  }
+  provisioner "file" {
+    source      = "config.json"
+    destination = "/tmp/config.json"
+  }
+  provisioner "remote-exec" {
+    inline = [
+      "cp /tmp/config.json /var/magg/config.json",
+      "/opt/magg/env/bin/python /opt/magg/src/magg.py --renew --mail --config=/var/magg/config.json >> /var/magg/magg.log 2>&1",
+    ]
+  }
 }
 
 output "ec2_global_ips" {
