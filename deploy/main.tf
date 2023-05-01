@@ -28,6 +28,11 @@ provider "aws" {
   region = "us-west-1"
 }
 
+resource "aws_key_pair" "aws_magg" {
+  key_name   = "aws-magg"
+  public_key = file("~/.ssh/aws-magg.pub")
+}
+
 resource "aws_security_group" "magg_sg" {
   name = "magg-sg"
 
@@ -54,7 +59,6 @@ resource "aws_security_group" "magg_sg" {
 }
 
 resource "aws_instance" "magg_instance" {
-  ami           = ""
   instance_type = "t2.micro"
   key_name      = "aws-magg"
   security_groups = [
@@ -66,7 +70,7 @@ resource "aws_instance" "magg_instance" {
               echo ${var.metaculus_api_key} > ~/metaculus_api_key
               export MAIL_FROM=${var.mail_from}
               export MAIL_TO=${var.mail_to}
-              /opt/magg/env/bin/python -m magg --renew --mail --mail-from=$MAIL_FROM --mail-to=$MAIL_TO >> /var/log/magg.log 2>&1
+              /opt/magg/env/bin/python /opt/magg/src/magg.py --renew --mail --mail-from=$MAIL_FROM --mail-to=$MAIL_TO >> /var/log/magg.log 2>&1
               EOF
 }
 

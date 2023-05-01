@@ -29,5 +29,5 @@ chmod 600 /home/magg/.ssh/authorized_keys
 EOF
 
 # run every Wednesday at 15:30
-echo "30 15 * * 3 /opt/magg/env/bin/python -m magg --renew --mail --mail-from=$MAIL_FROM --mail-to=$MAIL_TO >> /var/log/magg.log 2>&1" | crontab -
+echo "30 15 * * 3 /opt/magg/env/bin/python /opt/magg/src/magg.py --renew --mail --mail-from=$MAIL_FROM --mail-to=$MAIL_TO >> /var/log/magg.log 2>&1" | crontab -
 
