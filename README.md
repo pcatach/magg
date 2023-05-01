@@ -42,17 +42,20 @@ $ ./env/bin/python src/magg.py --renew --mail
 
 ## Deployment
 
-Create the python package with
+Create the packer package with
 
 ```
-./env/bin/python -m build --outdir deploy/
+cd deploy
+packer build image.pkr.hcl
 ```
 
-Then deploy to ec2 with
+This will output the AMI ID you will input into `main.tf`.
+Then deploy to AWS with
 
 ```
 export TF_VAR_metaculus_api_key=<your metaculus api key>
-cd deploy
+export TF_VAR_mail_from=<your from email>
+export TF_VAR_mail_to=<your to email>
 terraform init
 terraform apply
 ```

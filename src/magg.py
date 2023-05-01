@@ -10,7 +10,7 @@ from mailing import send_email
 logging.basicConfig(level=logging.DEBUG)
 
 
-def main(renew, mail, config_path):
+def main(renew, mail, config_path, mail_from, mail_to):
     with open(config_path) as config_file:
         config = json.load(config_file)
 
@@ -23,14 +23,14 @@ def main(renew, mail, config_path):
 
     html = generate_question_digest(questions, config["categories"])
 
-    with open("/digest.html", "w") as f:
+    with open("~/digest.html", "w") as f:
         f.write(html)
 
     if mail:
         send_email(
             subject="Magg's Metaculus Digest",
-            from_address=config["from_address"],
-            to_address=config["to_address"],
+            from_address=mail_from or config["from_address"],
+            to_address=mail_to or config["to_address"],
             html_content=html,
             aws_region=config["aws_region"],
         )
@@ -53,5 +53,15 @@ parser.add_argument(
 parser.add_argument(
     "-c", "--config", help="path to config file", default="/config.json"
 )
+parser.add_argument(
+    "--mail-from",
+    help="email address to send from",
+    dest=None,
+)
+parser.add_argument(
+    "--mail-to",
+    help="email address to send to",
+    dest=None,
+)
 args = parser.parse_args()
-main(args.renew, args.mail, args.config)
+main(args.renew, args.mail, args.config, args.mail_from, args.mail_to)

@@ -7,7 +7,7 @@ import requests
 from models import Question, BASE_URL, LIMIT_PER_CATEGORY
 
 LOG = logging.getLogger(__name__)
-with open("/metaculus_api_key") as f:
+with open("~/metaculus_api_key") as f:
     API_KEY = f.read().strip()
 HEADERS = {
     "Content-Type": "application/json",

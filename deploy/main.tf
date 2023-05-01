@@ -16,13 +16,16 @@ variable "metaculus_api_key" {
   type = string
 }
 
-provider "aws" {
-  region = "us-west-1"
+variable "mail_from" {
+  type = string
 }
 
-resource "aws_key_pair" "aws_magg" {
-  key_name   = "aws-magg"
-  public_key = file("~/.ssh/aws-magg.pub")
+variable "mail_to" {
+  type = string
+}
+
+provider "aws" {
+  region = "us-west-1"
 }
 
 resource "aws_security_group" "magg_sg" {
@@ -51,7 +54,7 @@ resource "aws_security_group" "magg_sg" {
 }
 
 resource "aws_instance" "magg_instance" {
-  ami           = "ami-014d05e6b24240371" # us-west-1 ubuntu 22.04
+  ami           = ""
   instance_type = "t2.micro"
   key_name      = "aws-magg"
   security_groups = [
@@ -60,7 +63,10 @@ resource "aws_instance" "magg_instance" {
   iam_instance_profile = aws_iam_instance_profile.magg_instance_profile.name
   user_data            = <<-EOF
               #!/bin/bash
-              echo ${var.metaculus_api_key} > /metaculus_api_key
+              echo ${var.metaculus_api_key} > ~/metaculus_api_key
+              export MAIL_FROM=${var.mail_from}
+              export MAIL_TO=${var.mail_to}
+              /opt/magg/env/bin/python -m magg --renew --mail --mail-from=$MAIL_FROM --mail-to=$MAIL_TO >> /var/log/magg.log 2>&1
               EOF
 }
 
@@ -91,38 +97,6 @@ resource "aws_iam_role" "ses_role" {
   })
 }
 
-
-resource "null_resource" "magg_data" {
-  connection {
-    host        = aws_instance.magg_instance.public_ip
-    type        = "ssh"
-    user        = "ubuntu"
-    private_key = file("~/.ssh/aws-magg.pem")
-  }
-
-  provisioner "file" {
-    source      = "magg-1.0.0.tar.gz"
-    destination = "/tmp/magg-1.0.0.tar.gz"
-  }
-
-  provisioner "file" {
-    source      = "config.json"
-    destination = "/tmp/config.json"
-  }
-
-  provisioner "file" {
-    source      = "deploy.sh"
-    destination = "/tmp/deploy.sh"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /tmp/deploy.sh",
-      "sudo /tmp/deploy.sh",
-    ]
-  }
-
-  provisioner "local-exec" {
-    command = "echo The server IP address is ${aws_instance.magg_instance.public_ip}"
-  }
+output "ec2_global_ips" {
+  value = ["${aws_instance.magg_instance.public_ip}"]
 }

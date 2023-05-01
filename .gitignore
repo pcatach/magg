@@ -13,4 +13,4 @@ env/
 forecasts.db
 config.json
 digest.html
-
+deploy/aws-magg.pub
