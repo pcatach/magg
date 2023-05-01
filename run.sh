@@ -1,1 +1,0 @@
-/opt/magg/env/bin/python /opt/magg/src/magg.py --renew --mail --mail-from=$(cat /mail_from) --mail-to=$(cat /mail_to) >> /var/log/magg.log 2>&1

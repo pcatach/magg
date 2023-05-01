@@ -34,7 +34,9 @@ class Question:
     category: str | None = None
 
     @classmethod
-    def from_api_response(cls, question_dict, category=None):
+    def from_api_response(
+        cls, question_dict, category=None, database_path="forecasts.db"
+    ):
         community_prediction, statistic = cls.get_community_prediction(question_dict)
         question = cls(
             id=question_dict["id"],
@@ -52,12 +54,12 @@ class Question:
             community_prediction_statistic=statistic,
             category=category,
         )
-        question.save_to_db()
+        question.save_to_db(database_path)
         return question
 
-    def save_to_db(self):
+    def save_to_db(self, path="forecasts.db"):
         # Set up the database connection
-        with sqlite3.connect("/forecasts.db") as connection:
+        with sqlite3.connect(path) as connection:
             c = connection.cursor()
 
             # Create the forecasts table if it does not already exist
@@ -118,8 +120,8 @@ class Question:
             )
 
     @classmethod
-    def load_from_db(cls):
-        with sqlite3.connect("/forecasts.db") as connection:
+    def load_from_db(cls, path="forecasts.db"):
+        with sqlite3.connect(path) as connection:
             c = connection.cursor()
 
             c.execute("SELECT * FROM forecasts")

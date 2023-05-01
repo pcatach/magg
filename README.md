@@ -21,12 +21,19 @@ $ ./env/bin/pip install -r requirements.txt
 ## Usage
 
 ```python
-from api import get_questions
+import datetime
+from api import MetaculusClient
 categories = ["computing", "bio"]
 
-questions = get_questions(
+config = {
+    "metaculus_api_key": None,
+    "database_path": "forecast.db",
+}
+client = MetaculusClient(config)
+
+questions = client.get_questions(
     categories=categories,
-    limit=30,
+    limit=5,
     min_published_time=datetime.datetime.now() - datetime.timedelta(days=60),
     renew=True,
 )
@@ -53,9 +60,6 @@ This will output the AMI ID you will input into `main.tf`.
 Then deploy to AWS with
 
 ```
-export TF_VAR_metaculus_api_key=<your metaculus api key>
-export TF_VAR_mail_from=<your from email>
-export TF_VAR_mail_to=<your to email>
 terraform init
 terraform apply
 ```
