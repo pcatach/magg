@@ -28,7 +28,7 @@ def generate_question_digest(questions, categories):
         html += f"<p><strong>Published Date:</strong> {question.publish_time}</p>"
         html += f"<p><strong>Closing Date:</strong> {question.close_time}</p>"
         html += f"<p><strong>Resolving Date:</strong> {question.resolve_time}</p>"
-        html += f"<p><strong>Number of Predictions:</strong> {question.number_of_predictions}</p>"
+        html += f"<p><strong>Number of Forecasters:</strong> {question.number_of_forecasters}</p>"
         html += f"<p><strong>Community Prediction{' ('+question.community_prediction_statistic+')' if question.community_prediction_statistic else ''}</strong>: "
         if question.community_prediction is not None:
             if type(question.community_prediction) == float:

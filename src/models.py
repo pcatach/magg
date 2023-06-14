@@ -27,7 +27,7 @@ class Question:
     close_time: datetime.datetime
     resolve_time: datetime.datetime
     active_state: str
-    number_of_predictions: int
+    number_of_forecasters: int
     activity: float
     community_prediction: str | None = None
     community_prediction_statistic: str | None = None
@@ -49,7 +49,7 @@ class Question:
             resolve_time=sanitize_datetime(question_dict["resolve_time"]),
             active_state=question_dict["active_state"],
             activity=question_dict["activity"],
-            number_of_predictions=question_dict["number_of_predictions"],
+            number_of_forecasters=question_dict["number_of_forecasters"],
             community_prediction=community_prediction,
             community_prediction_statistic=statistic,
             category=category,
@@ -74,7 +74,7 @@ class Question:
                     close_time TIMESTAMP,
                     resolve_time TIMESTAMP,
                     active_state TEXT,
-                    number_of_predictions INTEGER,
+                    number_of_forecasters INTEGER,
                     activity FLOAT,
                     community_prediction FLOAT,
                     community_prediction_statistic TEXT,
@@ -93,7 +93,7 @@ class Question:
                     close_time, 
                     resolve_time, 
                     active_state, 
-                    number_of_predictions, 
+                    number_of_forecasters, 
                     activity, 
                     community_prediction, 
                     community_prediction_statistic, 
@@ -111,7 +111,7 @@ class Question:
                     self.close_time,
                     self.resolve_time,
                     self.active_state,
-                    self.number_of_predictions,
+                    self.number_of_forecasters,
                     self.activity,
                     self.community_prediction,
                     self.community_prediction_statistic,
