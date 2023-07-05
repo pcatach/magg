@@ -11,6 +11,6 @@ env/
 *.egg-info
 
 forecasts.db
-config.json
+config.*json
 digest.html
 deploy/aws-magg.pub

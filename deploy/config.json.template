@@ -2,8 +2,10 @@
     "from_address": "FILL_THIS_IN",
     "to_address": "FILL_THIS_IN",
     "aws_region": "FILL_THIS_IN",
-    "database_path": "FILL_THIS_IN",
     "metaculus_api_key": "FILL_THIS_IN",
+    "database_location": "filesystem | s3",
+    "database_path": "forecasts.db",
+    "s3_bucket": "magg",
     "categories": [
         "bio",
         "business",
@@ -24,6 +26,6 @@
         "plantbased",
         "social",
         "tech",
-        "ukraine"      
+        "ukraine"
     ]
 }
