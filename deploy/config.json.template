@@ -5,7 +5,7 @@
     "metaculus_api_key": "FILL_THIS_IN",
     "database_location": "filesystem | s3",
     "database_path": "forecasts.db",
-    "s3_bucket": "magg",
+    "s3_bucket": "FILL_THIS_IN",
     "categories": [
         "bio",
         "business",

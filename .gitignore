@@ -10,6 +10,7 @@ env/
 *.whl
 *.egg-info
 
+.env
 forecasts.db
 config.*json
 digest.html

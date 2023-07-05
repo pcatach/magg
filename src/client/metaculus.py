@@ -1,21 +1,18 @@
 import datetime
 import logging
-import sqlite3
 
-import boto3
 import requests
 
-from .models import Question, BASE_URL, LIMIT_PER_CATEGORY
+from .exceptions import MetaculusAPIError
+from .mixins import DatabaseMixin
+from ..models import Question, BASE_URL, LIMIT_PER_CATEGORY
 
 LOG = logging.getLogger(__name__)
 
-
-class MetaculusClient:
+class MetaculusClient(DatabaseMixin):
     def __init__(self, config):
+        super().__init__(config)
         self.session = requests.Session()
-        self.config = config
-        self.db_connection = None
-        self.s3_client = None
 
         if config["metaculus_api_key"] is not None:
             headers = {
@@ -24,39 +21,12 @@ class MetaculusClient:
             }
             self.session.headers.update(headers)
 
-    def __enter__(self):
-        if self.config["database_location"] == "filesystem":
-            self.db_connection = sqlite3.connect(self.config["database_path"])
-        elif self.config["database_location"] == "s3":
-            self.s3_client = boto3.client("s3")
-            try:
-                self.s3_client.download_file(
-                    self.config["s3_bucket"],
-                    self.config["database_path"],
-                    "/tmp/forecasts.db",
-                )
-            except self.s3_client.exceptions.NoSuchKey:
-                LOG.info("No database found in S3, creating a new one")
-        else:
-            raise ValueError(f"Unknown database type: {self.config['database']}")
-
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.db_connection.close()
-        if self.config["database_location"] == "s3":
-            self.s3_client.upload_file(
-                "/tmp/forecasts.db",
-                self.config["s3_bucket"],
-                self.config["database_path"],
-            )
-
     def get_categories_list(self, limit: int = None):
         next_url = f"{BASE_URL}/api2/categories/"
         categories = []
 
         while next_url:
-            LOG.debug(f"Fetching categories from {next_url}")
+            LOG.info(f"Fetching categories from {next_url}")
             response = self.session.get(next_url)
             data = response.json()
             next_url = data["next"]
@@ -92,9 +62,12 @@ class MetaculusClient:
                 )
 
             while next_url:
-                LOG.debug(f"Fetching questions from {next_url}")
+                LOG.info(f"Fetching questions from {next_url}")
                 response = self.session.get(next_url)
                 data = response.json()
+                if "results" not in data:
+                    LOG.error(f"Error fetching questions: {data}")
+                    raise MetaculusAPIError(data.get("detail", "unknown"))
                 next_url = data["next"]
 
                 questions.extend(
