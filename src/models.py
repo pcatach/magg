@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 import datetime
 import math
-import sqlite3
 
 BASE_URL = "https://www.metaculus.com"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
@@ -34,9 +33,7 @@ class Question:
     category: str | None = None
 
     @classmethod
-    def from_api_response(
-        cls, question_dict, category=None, database_path="forecasts.db"
-    ):
+    def from_api_response(cls, question_dict, category=None, db_connection=None):
         community_prediction, statistic = cls.get_community_prediction(question_dict)
         question = cls(
             id=question_dict["id"],
@@ -54,80 +51,77 @@ class Question:
             community_prediction_statistic=statistic,
             category=category,
         )
-        question.save_to_db(database_path)
+        question.save_to_db(db_connection)
         return question
 
-    def save_to_db(self, path="forecasts.db"):
-        # Set up the database connection
-        with sqlite3.connect(path) as connection:
-            c = connection.cursor()
+    def save_to_db(self, db_connection):
+        c = db_connection.cursor()
 
-            # Create the forecasts table if it does not already exist
-            c.execute(
-                """CREATE TABLE IF NOT EXISTS forecasts (
-                    id INTEGER PRIMARY KEY,
-                    page_url TEXT,
-                    author_name TEXT,
-                    title TEXT,
-                    created_time TIMESTAMP,
-                    publish_time TIMESTAMP,
-                    close_time TIMESTAMP,
-                    resolve_time TIMESTAMP,
-                    active_state TEXT,
-                    number_of_forecasters INTEGER,
-                    activity FLOAT,
-                    community_prediction FLOAT,
-                    community_prediction_statistic TEXT,
-                    category TEXT
-                )"""
-            )
+        # Create the forecasts table if it does not already exist
+        c.execute(
+            """CREATE TABLE IF NOT EXISTS forecasts (
+                id INTEGER PRIMARY KEY,
+                page_url TEXT,
+                author_name TEXT,
+                title TEXT,
+                created_time TIMESTAMP,
+                publish_time TIMESTAMP,
+                close_time TIMESTAMP,
+                resolve_time TIMESTAMP,
+                active_state TEXT,
+                number_of_forecasters INTEGER,
+                activity FLOAT,
+                community_prediction FLOAT,
+                community_prediction_statistic TEXT,
+                category TEXT
+            )"""
+        )
 
-            c.execute(
-                """INSERT OR REPLACE INTO forecasts (
-                    id, 
-                    page_url, 
-                    author_name, 
-                    title, 
-                    created_time, 
-                    publish_time, 
-                    close_time, 
-                    resolve_time, 
-                    active_state, 
-                    number_of_forecasters, 
-                    activity, 
-                    community_prediction, 
-                    community_prediction_statistic, 
-                    category) 
-                    VALUES 
-                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    self.id,
-                    self.page_url,
-                    self.author_name,
-                    self.title,
-                    self.created_time,
-                    self.publish_time,
-                    self.close_time,
-                    self.resolve_time,
-                    self.active_state,
-                    self.number_of_forecasters,
-                    self.activity,
-                    self.community_prediction,
-                    self.community_prediction_statistic,
-                    self.category,
-                ),
-            )
+        c.execute(
+            """INSERT OR REPLACE INTO forecasts (
+                id, 
+                page_url, 
+                author_name, 
+                title, 
+                created_time, 
+                publish_time, 
+                close_time, 
+                resolve_time, 
+                active_state, 
+                number_of_forecasters, 
+                activity, 
+                community_prediction, 
+                community_prediction_statistic, 
+                category) 
+                VALUES 
+                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                self.id,
+                self.page_url,
+                self.author_name,
+                self.title,
+                self.created_time,
+                self.publish_time,
+                self.close_time,
+                self.resolve_time,
+                self.active_state,
+                self.number_of_forecasters,
+                self.activity,
+                self.community_prediction,
+                self.community_prediction_statistic,
+                self.category,
+            ),
+        )
 
     @classmethod
-    def load_from_db(cls, path="forecasts.db"):
-        with sqlite3.connect(path) as connection:
-            c = connection.cursor()
+    def load_from_db(cls, db_connection):
+        c = db_connection.cursor()
 
-            c.execute("SELECT * FROM forecasts")
-            results = c.fetchall()
+        c.execute("SELECT * FROM forecasts")
+        results = c.fetchall()
 
-            return [cls(*result) for result in results]
+        return [cls(*result) for result in results]
 
     @classmethod
     def get_community_prediction(cls, question_dict):

@@ -1,9 +1,11 @@
 import datetime
 import logging
+import sqlite3
 
+import boto3
 import requests
 
-from models import Question, BASE_URL, LIMIT_PER_CATEGORY
+from .models import Question, BASE_URL, LIMIT_PER_CATEGORY
 
 LOG = logging.getLogger(__name__)
 
@@ -12,6 +14,8 @@ class MetaculusClient:
     def __init__(self, config):
         self.session = requests.Session()
         self.config = config
+        self.db_connection = None
+        self.s3_client = None
 
         if config["metaculus_api_key"] is not None:
             headers = {
@@ -19,6 +23,33 @@ class MetaculusClient:
                 "Authorization": f"Token {config['metaculus_api_key']}",
             }
             self.session.headers.update(headers)
+
+    def __enter__(self):
+        if self.config["database_location"] == "filesystem":
+            self.db_connection = sqlite3.connect(self.config["database_path"])
+        elif self.config["database_location"] == "s3":
+            self.s3_client = boto3.client("s3")
+            try:
+                self.s3_client.download_file(
+                    self.config["s3_bucket"],
+                    self.config["database_path"],
+                    "/tmp/forecasts.db",
+                )
+            except self.s3_client.exceptions.NoSuchKey:
+                LOG.info("No database found in S3, creating a new one")
+        else:
+            raise ValueError(f"Unknown database type: {self.config['database']}")
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.db_connection.close()
+        if self.config["database_location"] == "s3":
+            self.s3_client.upload_file(
+                "/tmp/forecasts.db",
+                self.config["s3_bucket"],
+                self.config["database_path"],
+            )
 
     def get_categories_list(self, limit: int = None):
         next_url = f"{BASE_URL}/api2/categories/"
@@ -45,7 +76,7 @@ class MetaculusClient:
         renew: bool = False,
     ):
         if not renew:
-            return Question.load_from_db()
+            return Question.load_from_db(self.db_connection)
 
         questions = []
         for category in categories:
@@ -71,7 +102,7 @@ class MetaculusClient:
                         Question.from_api_response(
                             question,
                             category=category,
-                            database_path=self.config["database_path"],
+                            db_connection=self.db_connection,
                         )
                         for question in data["results"]
                     ]

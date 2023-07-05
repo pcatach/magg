@@ -29,14 +29,13 @@ config = {
     "metaculus_api_key": None,
     "database_path": "forecast.db",
 }
-client = MetaculusClient(config)
-
-questions = client.get_questions(
-    categories=categories,
-    limit=5,
-    min_published_time=datetime.datetime.now() - datetime.timedelta(days=60),
-    renew=True,
-)
+with MetaculusClient(config) as client:
+    questions = client.get_questions(
+        categories=categories,
+        limit=5,
+        min_published_time=datetime.datetime.now() - datetime.timedelta(days=60),
+        renew=True,
+    )
 
 html = generate_question_digest(questions, categories)
 ```
@@ -44,10 +43,23 @@ html = generate_question_digest(questions, categories)
 or using the command line:
 
 ```
-$ ./env/bin/python src/magg.py --renew --mail
+$ ./env/bin/python -m src.magg --renew --mail
 ```
 
 ## Deployment
+
+### Setting up S3
+
+You need to create an S3 bucket to store the database.
+
+### Sending email with SES
+
+To enable email (`--mail`), you need to configure SES. 
+You can do this by following the instructions [here](https://docs.aws.amazon.com/ses/latest/dg/send-an-email-using-sdk-programmatically.html).
+
+Fill in `config.json` with the appropriate values.
+
+### Deploying to AWS
 
 Create the packer package with
 
@@ -64,9 +76,6 @@ terraform init
 terraform apply
 ```
 
-### Making email work
+### TODO
 
-To enable email (`--mail`), you need to configure SES. 
-You can do this by following the instructions [here](https://docs.aws.amazon.com/ses/latest/dg/send-an-email-using-sdk-programmatically.html).
-
-Fill in `config.json` with the appropriate values.
+- [ ] Fine-tune the queries and database operations to get the most relevant questions.

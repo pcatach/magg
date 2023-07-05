@@ -3,9 +3,9 @@ import datetime
 import json
 import logging
 
-from api import MetaculusClient
-from formatting import generate_question_digest
-from mailing import send_email
+from .api import MetaculusClient
+from .formatting import generate_question_digest
+from .mailing import send_email
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -14,14 +14,13 @@ def main(renew, mail, config_path):
     with open(config_path) as config_file:
         config = json.load(config_file)
 
-    client = MetaculusClient(config)
-
-    questions = client.get_questions(
-        categories=config["categories"],
-        min_published_time=datetime.datetime.now() - datetime.timedelta(days=30),
-        limit=30,
-        renew=renew,
-    )
+    with MetaculusClient(config) as client:
+        questions = client.get_questions(
+            categories=config["categories"],
+            min_published_time=datetime.datetime.now() - datetime.timedelta(days=30),
+            limit=30,
+            renew=renew,
+        )
 
     html = generate_question_digest(questions, config["categories"])
 
