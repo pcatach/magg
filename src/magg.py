@@ -3,9 +3,10 @@ import datetime
 import json
 import logging
 
-from .client.metaculus import MetaculusClient
-from .formatting import generate_question_digest
-from .mailing import send_email
+from client.metaculus import MetaculusClient
+from formatting import generate_question_digest
+from mailing import send_email
+
 
 def main(renew, mail, config_path):
     with open(config_path) as config_file:
@@ -34,22 +35,31 @@ def main(renew, mail, config_path):
         )
 
 
-# use argparse to parse command line arguments
-parser = argparse.ArgumentParser(description="Magg's Metaculus Digest")
-parser.add_argument(
-    "-r",
-    "--renew",
-    help="renew questions from Metaculus API",
-    action="store_true",
-)
-parser.add_argument(
-    "-m",
-    "--mail",
-    help="send email",
-    action="store_true",
-)
-parser.add_argument("-c", "--config", help="path to config file", default="config.json")
-parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
-args = parser.parse_args()
-logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
-main(args.renew, args.mail, args.config)
+def cli():
+    # use argparse to parse command line arguments
+    parser = argparse.ArgumentParser(description="Magg's Metaculus Digest")
+    parser.add_argument(
+        "-r",
+        "--renew",
+        help="renew questions from Metaculus API",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-m",
+        "--mail",
+        help="send email",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-c", "--config", help="path to config file", default="config.json"
+    )
+    parser.add_argument(
+        "-v", "--verbose", help="increase output verbosity", action="store_true"
+    )
+    args = parser.parse_args()
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+    main(args.renew, args.mail, args.config)
+
+
+if __name__ == "__main__":
+    cli()

@@ -3,11 +3,12 @@ import logging
 
 import requests
 
-from .exceptions import MetaculusAPIError
-from .mixins import DatabaseMixin
-from ..models import Question, BASE_URL, LIMIT_PER_CATEGORY
+from client.exceptions import MetaculusAPIError
+from client.mixins import DatabaseMixin
+from models import Question, BASE_URL, LIMIT_PER_CATEGORY
 
 LOG = logging.getLogger(__name__)
+
 
 class MetaculusClient(DatabaseMixin):
     def __init__(self, config):

@@ -18,6 +18,12 @@ $ python3.9 -m venv env
 $ ./env/bin/pip install -r requirements.txt
 ```
 
+Or to install the package in editable mode:
+
+```
+$ ./env/bin/pip install -e .
+```
+
 ## Usage
 
 ```python
@@ -44,6 +50,8 @@ or using the command line:
 
 ```
 $ ./env/bin/python -m src.magg --renew --mail
+$ # or, if installed in editable mode
+$ ./env/bin/magg --renew --mail
 ```
 
 ## Deployment
@@ -59,7 +67,13 @@ You can do this by following the instructions [here](https://docs.aws.amazon.com
 
 Fill in `config.json` with the appropriate values.
 
-### Deploying to AWS
+### Packaging code
+
+```
+./env/bin/pip install -r requirements.txt -t magg/
+```
+
+### Deploying to AWS Lambda
 
 Create the packer package with
 
