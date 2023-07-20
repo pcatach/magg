@@ -16,48 +16,7 @@ provider "aws" {
   region = "us-west-1"
 }
 
-resource "aws_key_pair" "aws_magg" {
-  key_name   = "aws-magg"
-  public_key = file("~/.ssh/aws-magg.pub")
-}
-
-resource "aws_security_group" "magg_sg" {
-  name = "magg-sg"
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-
-resource "aws_iam_instance_profile" "magg_instance_profile" {
-  name = "magg_instance_profile"
-  role = aws_iam_role.ses_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "ses_policy_attachment" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
-  role       = aws_iam_role.ses_role.name
-}
-
-resource "aws_iam_role" "ses_role" {
+resource "aws_iam_role" "magg_role" {
   name = "ses_role"
 
   assume_role_policy = jsonencode({
@@ -67,47 +26,68 @@ resource "aws_iam_role" "ses_role" {
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
-          Service = "ec2.amazonaws.com"
+          Service = "lambda.amazonaws.com"
         }
       }
     ]
   })
 }
 
-resource "aws_instance" "magg_instance" {
-  ami           = "FILL_THIS_IN"
-  instance_type = "t2.micro"
-  key_name      = "aws-magg"
-  security_groups = [
-    aws_security_group.magg_sg.name,
-  ]
-  iam_instance_profile = aws_iam_instance_profile.magg_instance_profile.name
-  user_data            = <<-EOF
-              #!/bin/bash
-              # run every Wednesday at 15:30
-              echo "30 15 * * 3 /opt/magg/env/bin/python /opt/magg/src/magg.py --renew --mail  --config=/var/magg/config.json >> /var/magg/magg.log 2>&1" | crontab -
-              EOF
+resource "aws_iam_instance_profile" "magg_instance_profile" {
+  name = "magg_instance_profile"
+  role = aws_iam_role.magg_role.name
 }
 
-resource "null_resource" "magg_data" {
-  connection {
-    host        = aws_instance.magg_instance.public_ip
-    type        = "ssh"
-    user        = "ubuntu"
-    private_key = file("~/.ssh/aws-magg.pem")
-  }
-  provisioner "file" {
-    source      = "config.json"
-    destination = "/tmp/config.json"
-  }
-  provisioner "remote-exec" {
-    inline = [
-      "cp /tmp/config.json /var/magg/config.json",
-      "/opt/magg/env/bin/python /opt/magg/src/magg.py --renew --mail --config=/var/magg/config.json >> /var/magg/magg.log 2>&1",
-    ]
-  }
+resource "aws_iam_role_policy_attachment" "ses_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+  role       = aws_iam_role.magg_role.name
 }
 
-output "ec2_global_ips" {
-  value = ["${aws_instance.magg_instance.public_ip}"]
+resource "aws_iam_role_policy_attachment" "s3_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  role       = aws_iam_role.magg_role.name
 }
+
+resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+  role       = aws_iam_role.magg_role.name
+}
+
+resource "aws_cloudwatch_event_rule" "weekly_event" {
+  name                = "magg_weekly_event"
+  schedule_expression = "cron(0 15 ? * WED *)" # Every Wednesday at 3 PM
+}
+
+resource "aws_ssm_parameter" "config_json" {
+  name  = "config.json"
+  type  = "SecureString"
+  value = file("config.s3.json") # this file should exist in the same directory as main.tf
+}
+
+resource "aws_lambda_function" "magg_task" {
+  function_name = "MaggTask"
+  handler       = "magg.lambda_handler"
+  runtime       = "python3.10"
+
+  filename         = "magg.zip"
+  source_code_hash = filebase64sha256("magg.zip")
+
+  role = aws_iam_role.magg_role.arn
+
+  timeout = 300
+}
+
+resource "aws_cloudwatch_event_target" "execute_weekly_lambda" {
+  rule      = aws_cloudwatch_event_rule.weekly_event.name
+  target_id = "MaggTask"
+  arn       = aws_lambda_function.magg_task.arn
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.magg_task.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.weekly_event.arn
+}
+
