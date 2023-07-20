@@ -7,7 +7,7 @@ Metaculus Aggregator
 This package is designed to help users aggregate predictions from Metaculus in a digest format. 
 It is currently in beta and has not been tested for robustness.
 
-By default, it sends an email every Wednesday 3:30pm UTC with the top 30 questions in all categories (in terms of activity) published in the last 30 days.
+By default, it sends an email every Wednesday 3:00pm UTC with the top 30 questions in all categories (in terms of activity) published in the last 30 days.
 
 ## Installation
 
@@ -67,7 +67,7 @@ You can do this by following the instructions [here](https://docs.aws.amazon.com
 
 Fill in `config.json` with the appropriate values.
 
-### Packaging code
+### Deploying to AWS Lambda
 
 Create and zip the package with
 
@@ -77,17 +77,7 @@ $ cd package
 $ zip -r ../magg.zip .
 ```
 
-### Deploying to AWS Lambda
-
-Create the packer package with
-
-```
-cd deploy
-packer build image.pkr.hcl
-```
-
-This will output the AMI ID you will input into `main.tf`.
-Then deploy to AWS with
+Apply the terraform configuration with
 
 ```
 terraform init
