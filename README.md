@@ -69,17 +69,9 @@ Fill in `config.json` with the appropriate values.
 
 ### Deploying to AWS Lambda
 
-Create and zip the package with
-
 ```
-$ pip3.10 install . -t package/
-$ cd package
-$ zip -r ../magg.zip .
-```
-
-Apply the terraform configuration with
-
-```
+cd deploy/
+./build.sh
 terraform init
 terraform apply
 ```
