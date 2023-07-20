@@ -3,6 +3,8 @@ import datetime
 import json
 import logging
 
+import boto3
+
 from client.metaculus import MetaculusClient
 from formatting import generate_question_digest
 from mailing import send_email
@@ -33,6 +35,15 @@ def main(renew, mail, config_path):
             html_content=html,
             aws_region=config["aws_region"],
         )
+
+
+def lambda_handler(event, context):
+    client = boto3.client("ssm")
+    response = client.get_parameter(Name="config.json", WithDecryption=True)
+    with open("/tmp/config.json", "w") as f:
+        f.write(response["Parameter"]["Value"])
+
+    main(renew=True, mail=True, config_path="/tmp/config.json")
 
 
 def cli():
