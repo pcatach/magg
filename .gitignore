@@ -6,12 +6,13 @@ env/
 *.tfstate
 *.tfstate.backup
 .terraform/
-*.tar.gz
-*.whl
 *.egg-info
+build
+package
 
 .env
 forecasts.db
 config.*json
 digest.html
 deploy/aws-magg.pub
+magg.zip

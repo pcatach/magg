@@ -11,10 +11,10 @@ By default, it sends an email every Wednesday 3:30pm UTC with the top 30 questio
 
 ## Installation
 
-Required: `python3.9` and `terraform` (for deployment).
+Required: `python3.10` and `terraform` (for deployment).
 
 ```
-$ python3.9 -m venv env
+$ python3.10 -m venv env
 $ ./env/bin/pip install -r requirements.txt
 ```
 
@@ -69,8 +69,12 @@ Fill in `config.json` with the appropriate values.
 
 ### Packaging code
 
+Create and zip the package with
+
 ```
-./env/bin/pip install -r requirements.txt -t magg/
+$ pip3.10 install . -t package/
+$ cd package
+$ zip -r ../magg.zip .
 ```
 
 ### Deploying to AWS Lambda
