@@ -24,7 +24,7 @@ def main(renew, mail, config_path):
 
     html = generate_question_digest(questions, config["categories"])
 
-    with open("digest.html", "w") as f:
+    with open("/tmp/digest.html", "w") as f:
         f.write(html)
 
     if mail:
