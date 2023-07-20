@@ -17,7 +17,7 @@ provider "aws" {
 }
 
 resource "aws_iam_role" "magg_role" {
-  name = "ses_role"
+  name = "magg_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -31,11 +31,6 @@ resource "aws_iam_role" "magg_role" {
       }
     ]
   })
-}
-
-resource "aws_iam_instance_profile" "magg_instance_profile" {
-  name = "magg_instance_profile"
-  role = aws_iam_role.magg_role.name
 }
 
 resource "aws_iam_role_policy_attachment" "ses_policy_attachment" {
