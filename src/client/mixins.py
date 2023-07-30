@@ -20,6 +20,13 @@ class DatabaseMixin:
             self.s3_client = boto3.client("s3", region_name=self.config["aws_region"])
 
     def __enter__(self):
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.disconnect()
+
+    def connect(self):
         if self.use_s3:
             try:
                 get_database_from_s3(self.s3_client, self.config)
@@ -31,7 +38,7 @@ class DatabaseMixin:
             self.db_connection = sqlite3.connect(self.config["database_path"])
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def disconnect(self):
         self.db_connection.close()
         if self.use_s3:
             upload_database_to_s3(self.s3_client, self.config)

@@ -28,22 +28,28 @@ $ ./env/bin/pip install -e .
 
 ```python
 import datetime
-from api import MetaculusClient
-categories = ["computing", "bio"]
+from magg import MetaculusClient
 
 config = {
     "metaculus_api_key": None,
-    "database_path": "forecast.db",
+    "database_location": "filesystem",
+    "database_path": "forecasts.db"
 }
-with MetaculusClient(config) as client:
-    questions = client.get_questions(
-        categories=categories,
-        limit=5,
-        min_published_time=datetime.datetime.now() - datetime.timedelta(days=60),
-        renew=True,
-    )
 
-html = generate_question_digest(questions, categories)
+client = MetaculusClient(config)
+client.connect()
+
+categories = client.get_categories_list()
+questions_per_category = client.get_questions_per_category(
+    limit_per_category=5,
+    categories = categories[:2],
+    min_published_time=datetime.datetime.now() - datetime.timedelta(days=60),
+    renew=True,
+)
+
+client.disconnect()
+
+html = generate_question_digest(questions_per_project, categories)
 ```
 
 or using the command line:
@@ -79,3 +85,4 @@ terraform apply
 ### TODO
 
 - [ ] Fine-tune the queries and database operations to get the most relevant questions.
+- [ ] Bug: if a question belongs to multiple categories, it will be counted multiple times.

@@ -4,9 +4,6 @@ import math
 
 BASE_URL = "https://www.metaculus.com"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
-LIMIT_PER_CATEGORY = (
-    60  # should be a multiple of 20, which is the default pagination limit
-)
 
 
 def sanitize_datetime(datetime_string: str) -> datetime.datetime:
@@ -16,8 +13,59 @@ def sanitize_datetime(datetime_string: str) -> datetime.datetime:
 
 
 @dataclass
+class Category:
+    id: str
+    short_name: str
+    long_name: str
+
+    @classmethod
+    def from_api_response(cls, category_dict: dict, db_connection) -> "Category":
+        category = cls(
+            id=category_dict["id"],
+            short_name=category_dict["short_name"],
+            long_name=category_dict["long_name"],
+        )
+        category.save_to_db(db_connection)
+        return category
+
+    def save_to_db(self, db_connection) -> None:
+        c = db_connection.cursor()
+        c.execute(
+            """CREATE TABLE IF NOT EXISTS categories (
+                id TEXT PRIMARY KEY,
+                short_name TEXT,
+                long_name TEXT
+            )"""
+        )
+        c.execute(
+            """INSERT OR REPLACE INTO categories (
+                id,
+                short_name,
+                long_name
+                )
+                VALUES
+                (?, ?, ?)
+            """,
+            (
+                self.id,
+                self.short_name,
+                self.long_name,
+            ),
+        )
+        db_connection.commit()
+
+    @classmethod
+    def load_from_db(cls, db_connection) -> list["Category"]:
+        c = db_connection.cursor()
+        c.execute("""SELECT * FROM categories""")
+        categories = c.fetchall()
+        return [cls(*category) for category in categories]
+
+
+@dataclass
 class Question:
     id: int
+    category: Category
     page_url: str
     author_name: str
     title: str
@@ -30,10 +78,11 @@ class Question:
     activity: float
     community_prediction: str | None = None
     community_prediction_statistic: str | None = None
-    category: str | None = None
 
     @classmethod
-    def from_api_response(cls, question_dict, category=None, db_connection=None):
+    def from_api_response(
+        cls, question_dict: dict, category: Category, db_connection
+    ) -> "Question":
         community_prediction, statistic = cls.get_community_prediction(question_dict)
         question = cls(
             id=question_dict["id"],
@@ -57,9 +106,9 @@ class Question:
     def save_to_db(self, db_connection):
         c = db_connection.cursor()
 
-        # Create the forecasts table if it does not already exist
+        # Create the questions table if it does not already exist
         c.execute(
-            """CREATE TABLE IF NOT EXISTS forecasts (
+            """CREATE TABLE IF NOT EXISTS questions (
                 id INTEGER PRIMARY KEY,
                 page_url TEXT,
                 author_name TEXT,
@@ -78,7 +127,7 @@ class Question:
         )
 
         c.execute(
-            """INSERT OR REPLACE INTO forecasts (
+            """INSERT OR REPLACE INTO questions (
                 id, 
                 page_url, 
                 author_name, 
@@ -92,7 +141,8 @@ class Question:
                 activity, 
                 community_prediction, 
                 community_prediction_statistic, 
-                category) 
+                category
+                )
                 VALUES 
                 (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -110,15 +160,16 @@ class Question:
                 self.activity,
                 self.community_prediction,
                 self.community_prediction_statistic,
-                self.category,
+                self.category.id,
             ),
         )
+        db_connection.commit()
 
     @classmethod
-    def load_from_db(cls, db_connection):
+    def load_from_db(cls, db_connection) -> list["Question"]:
         c = db_connection.cursor()
 
-        c.execute("SELECT * FROM forecasts")
+        c.execute("SELECT * FROM questions")
         results = c.fetchall()
 
         return [cls(*result) for result in results]
