@@ -1,4 +1,4 @@
-def generate_question_digest(questions, categories):
+def generate_question_digest(questions, projects):
     # Create the HTML header
     html = "<html><head><title>Question Digest</title></head><style>"
 
@@ -14,8 +14,8 @@ def generate_question_digest(questions, categories):
     # Add the intro text
     html += (
         "<p>Hello, <p>\n"
-        + "<p>This is your weekly digest of new metaculus questions on categories:\n<b>"
-        + "</b>, <b>".join(categories)
+        + "<p>This is your weekly digest of new metaculus questions on tournaments:\n<b>"
+        + "</b>, <b>".join([project.name for project in projects])
         + "</b>.<p>"
     )
 

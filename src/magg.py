@@ -15,14 +15,18 @@ def main(renew, mail, config_path):
         config = json.load(config_file)
 
     with MetaculusClient(config) as client:
-        questions = client.get_questions(
-            categories=config["categories"],
+        projects = client.get_projects_list()
+        projects = [
+            project for project in projects if project.name in config["projects"]
+        ]
+        questions = client.get_questions_per_project(
+            projects=projects,
             min_published_time=datetime.datetime.now() - datetime.timedelta(days=30),
-            limit=30,
+            limit_per_project=30,
             renew=renew,
         )
 
-    html = generate_question_digest(questions, config["categories"])
+    html = generate_question_digest(questions, projects)
 
     with open("/tmp/digest.html", "w") as f:
         f.write(html)

@@ -28,7 +28,7 @@ $ ./env/bin/pip install -e .
 
 ```python
 import datetime
-from magg import MetaculusClient
+from magg import MetaculusClient, generate_question_digest
 
 config = {
     "metaculus_api_key": None,
@@ -47,9 +47,18 @@ questions_per_category = client.get_questions_per_category(
     renew=True,
 )
 
+projects = client.get_projects_list()
+projects = [project for project in projects if "Quarterly Cup" in project.name]
+questions_per_project = client.get_questions_per_project(
+    limit_per_project=5,
+    projects = projects,
+    min_published_time=datetime.datetime.now() - datetime.timedelta(days=60),
+    renew=True,
+)
+
 client.disconnect()
 
-html = generate_question_digest(questions_per_project, categories)
+html = generate_question_digest(questions_per_project, projects)
 ```
 
 or using the command line:
@@ -86,3 +95,5 @@ terraform apply
 
 - [ ] Fine-tune the queries and database operations to get the most relevant questions.
 - [ ] Bug: if a question belongs to multiple categories, it will be counted multiple times.
+- [ ] Bug: get_questions_per_project() doesn't assign categories to questions.
+- [ ] Bug: limit_per_category and limit_per_project are not enforced really because the paginated calls always return a minimum of 10 questions

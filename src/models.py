@@ -13,6 +13,75 @@ def sanitize_datetime(datetime_string: str) -> datetime.datetime:
 
 
 @dataclass
+class Project:
+    id: int
+    name: str
+    subtitle: str
+    description: str
+    type: str
+    tournament_close_date: datetime.datetime | None
+
+    @classmethod
+    def from_api_response(cls, project_dict: dict, db_connection) -> "Project":
+        close_date = None
+        if project_dict["tournament_close_date"] is not None:
+            close_date = sanitize_datetime(project_dict["tournament_close_date"])
+
+        project = cls(
+            id=project_dict["id"],
+            name=project_dict["name"],
+            subtitle=project_dict["subtitle"],
+            description=project_dict["description"],
+            type=project_dict["type"],
+            tournament_close_date=close_date,
+        )
+        project.save_to_db(db_connection)
+        return project
+
+    def save_to_db(self, db_connection) -> None:
+        c = db_connection.cursor()
+        c.execute(
+            """CREATE TABLE IF NOT EXISTS projects (
+                id INTEGER PRIMARY KEY,
+                name TEXT,
+                subtitle TEXT,
+                description TEXT,
+                type TEXT,
+                tournament_close_date TEXT
+            )"""
+        )
+        c.execute(
+            """INSERT OR REPLACE INTO projects (
+                id,
+                name,
+                subtitle,
+                description,
+                type,
+                tournament_close_date
+                )
+                VALUES
+                (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                self.id,
+                self.name,
+                self.subtitle,
+                self.description,
+                self.type,
+                self.tournament_close_date,
+            ),
+        )
+        db_connection.commit()
+
+    @classmethod
+    def load_from_db(cls, db_connection) -> list["Project"]:
+        c = db_connection.cursor()
+        c.execute("""SELECT * FROM projects""")
+        projects = c.fetchall()
+        return [cls(*project) for project in projects]
+
+
+@dataclass
 class Category:
     id: str
     short_name: str
@@ -65,7 +134,6 @@ class Category:
 @dataclass
 class Question:
     id: int
-    category: Category
     page_url: str
     author_name: str
     title: str
@@ -78,10 +146,11 @@ class Question:
     activity: float
     community_prediction: str | None = None
     community_prediction_statistic: str | None = None
+    category: Category | None = None
 
     @classmethod
     def from_api_response(
-        cls, question_dict: dict, category: Category, db_connection
+        cls, question_dict: dict, db_connection, category: Category | None = None
     ) -> "Question":
         community_prediction, statistic = cls.get_community_prediction(question_dict)
         question = cls(
@@ -160,7 +229,7 @@ class Question:
                 self.activity,
                 self.community_prediction,
                 self.community_prediction_statistic,
-                self.category.id,
+                self.category.id if self.category else None,
             ),
         )
         db_connection.commit()

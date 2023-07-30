@@ -5,10 +5,9 @@ import requests
 
 from client.exceptions import MetaculusAPIError
 from client.mixins import DatabaseMixin
-from models import Category, Question, BASE_URL
+from models import Category, Question, Project, BASE_URL
 
 LOG = logging.getLogger(__name__)
-LIMIT = 60  # should be a multiple of 20, which is the default pagination limit
 
 
 class MetaculusClient(DatabaseMixin):
@@ -37,7 +36,15 @@ class MetaculusClient(DatabaseMixin):
 
     def get_projects_list(self, limit: int = None):
         url = f"{BASE_URL}/api2/projects/"
-        return self.get_paginated_results(url, limit)
+        project_dicts = self.get_paginated_results(url, limit)
+        projects = [
+            Project.from_api_response(
+                project_dict=project_dict,
+                db_connection=self.db_connection,
+            )
+            for project_dict in project_dicts
+        ]
+        return projects
 
     def get_questions_per_category(
         self,
@@ -69,6 +76,44 @@ class MetaculusClient(DatabaseMixin):
                         question,
                         db_connection=self.db_connection,
                         category=category,
+                    )
+                    for question in questions_dicts
+                ]
+            )
+
+        questions = sorted(questions, key=lambda q: q.activity, reverse=True)
+
+        return questions
+
+    def get_questions_per_project(
+        self,
+        *,
+        projects: list[Project],
+        limit_per_project: int,
+        min_published_time: datetime.datetime | None = None,
+        renew: bool = False,
+    ) -> list[Question]:
+        if not renew:
+            return Question.load_from_db(self.db_connection)
+
+        url = f"{BASE_URL}/api2/questions/?order_by=-activity&type=forecast"
+        if min_published_time is not None:
+            url = f"{url}&publish_time__gt={min_published_time.isoformat()}"
+            url = f"{url}&publish_time__lt={datetime.datetime.now().isoformat()}"
+
+        questions = []
+        for project in projects:
+            url_with_project = url + f"&project={project.id}"
+
+            questions_dicts = self.get_paginated_results(
+                url_with_project, limit=limit_per_project
+            )
+
+            questions.extend(
+                [
+                    Question.from_api_response(
+                        question,
+                        db_connection=self.db_connection,
                     )
                     for question in questions_dicts
                 ]
