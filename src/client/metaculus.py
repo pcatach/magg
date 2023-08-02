@@ -97,6 +97,7 @@ class MetaculusClient(DatabaseMixin):
             return Question.load_from_db(self.db_connection)
 
         url = f"{BASE_URL}/api2/questions/?order_by=-activity&type=forecast"
+        url += f"&close_time__gt={datetime.datetime.now().isoformat()}"
         if min_published_time is not None:
             url = f"{url}&publish_time__gt={min_published_time.isoformat()}"
             url = f"{url}&publish_time__lt={datetime.datetime.now().isoformat()}"
